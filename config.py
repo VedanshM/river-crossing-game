@@ -19,7 +19,14 @@ LAND_POS = [
 ]
 
 WALL_POS = [
-    (0.4*WIN_SIZE[0], 0.20*WIN_SIZE[1]),
+    (0.40*WIN_SIZE[0], 0.20*WIN_SIZE[1]),
+    (0.90*WIN_SIZE[0], 0.20*WIN_SIZE[1]),
     (0.15*WIN_SIZE[0], 0.45*WIN_SIZE[1]),
-    (0.7*WIN_SIZE[0], 0.70*WIN_SIZE[1]),
+    (0.55*WIN_SIZE[0], 0.45*WIN_SIZE[1]),
+    (0.70*WIN_SIZE[0], 0.70*WIN_SIZE[1]),
+    (0.05*WIN_SIZE[0], 0.70*WIN_SIZE[1]),
 ]
+WALL_CNT = len(WALL_POS)
+WALL_POINTS = 5
+
+

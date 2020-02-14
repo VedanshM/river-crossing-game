@@ -29,7 +29,6 @@ class Wall(pg.sprite.Sprite):
 
 draw_bg(window)
 walls = pg.sprite.Group()
-# walls.add(Wall(WALL_POS1))
 for i in WALL_POS:
     walls.add(Wall(i))
 for i in walls:
