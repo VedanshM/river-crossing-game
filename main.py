@@ -15,7 +15,25 @@ def draw_bg(window):
         pg.draw.rect(window, BROWN, i)
 
 
+class Wall(pg.sprite.Sprite):
+    def __init__(self, pos):
+        super().__init__()
+        self.x = pos[0]
+        self.y = pos[1]
+        self.surf = pg.image.load("wall.png").convert_alpha()
+        self.rect = self.surf.get_rect()
+
+    def update(self, window):
+        window.blit(self.surf, (self.x, self.y))
+
+
 draw_bg(window)
+walls = pg.sprite.Group()
+# walls.add(Wall(WALL_POS1))
+for i in WALL_POS:
+    walls.add(Wall(i))
+for i in walls:
+    i.update(window)
 pg.display.update()
 
 game_quit = False
