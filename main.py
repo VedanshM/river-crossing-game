@@ -6,6 +6,10 @@ pg.display.set_caption(WIN_CAPTION)
 clock = pg.time.Clock()
 
 
+def draw_sb(window):
+    pg.draw.rect(window, WHITE, SB_POS)
+
+
 def draw_bg(window):
     window.fill(LBLUE)
     pg.draw.rect(window, BLACK, HEAD_POS)
@@ -28,6 +32,7 @@ class Wall(pg.sprite.Sprite):
 
 
 draw_bg(window)
+draw_sb(window)
 walls = pg.sprite.Group()
 for i in WALL_POS:
     walls.add(Wall(i))
