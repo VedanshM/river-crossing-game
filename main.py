@@ -28,10 +28,54 @@ def draw_bg(window):
 
 
 class Player(pg.sprite.Sprite):
-    def __init__(self):
-        pass
+    def __init__(self, plno):
+        self.speed = 10
+        self.score = 0
+        self.wins = 0
+        self.surf = pg.image.load("turtle.png").convert_alpha()
+        self.surf = pg.transform.rotozoom(self.surf, 0,
+                                          PLANK_RATIO*WIN_SIZE[1] / self.surf.get_height())
+        self.x = (WIN_SIZE[0]-self.surf.get_height())//2
+        self.y = SB_POS[3]
+        if plno == 1:
+            self.ckeys = {"up": pg.K_UP, "down": pg.K_DOWN,
+                          "left": pg.K_LEFT, "right": pg.K_RIGHT}
+            self.name = "Player 1"
+            self.visible = True
+            self.y += WIN_SIZE[1]*(1-PLANK_RATIO)
+            self.ylimit = (SB_POS[3] + WIN_SIZE[1]*PLANK_RATIO, self.y)
+        else:
+            self.ckeys = {"up": pg.K_w, "down": pg.K_s,
+                          "left": pg.K_a, "right": pg.K_d}
+            self.name = "PLayer 2"
+            self.visible = False
+            self.ylimit = (self.y, SB_POS[3] + WIN_SIZE[1]*(1-2*PLANK_RATIO))
+            self.surf = pg.transform.scale(self.surf, 180, 1)
+        self.rect = self.surf.get_rect()
 
-    pass
+    def update(self, window):
+        if not self.visible:
+            return
+        keys = pg.key.get_pressed()
+
+        if keys[self.ckeys["up"]]:
+            self.y -= self.speed
+        if keys[self.ckeys["down"]]:
+            self.y += self.speed
+        if keys[self.ckeys["left"]]:
+            self.x -= self.speed
+        if keys[self.ckeys["right"]]:
+            self.x += self.speed
+
+        if(self.x < 0):
+            self.x = 0
+        if self.x > WIN_SIZE[0]-self.surf.get_width():
+            self.x = WIN_SIZE[0]-self.surf.get_width()
+        if(self.y < self.ylimit[0]):
+            self.y = self.ylimit[0]
+        if self.y > self.ylimit[1]:
+            self.y = self.ylimit[1]
+        window.blit(self.surf, (self.x, self.y))
 
 
 class Wall(pg.sprite.Sprite):
@@ -48,7 +92,7 @@ class Wall(pg.sprite.Sprite):
         window.blit(self.surf, (self.x, self.y))
 
     @staticmethod
-    def walls_gen(row, round_no):
+    def gen(row, round_no):
         if round_no == 1:
             no_of_walls = random.randint(3, 4)
         elif round_no == 2:
@@ -77,11 +121,14 @@ class Ship(pg.sprite.Sprite):
         self.x = pos[0]
         self.y = pos[1]
         self.speed = speed
-        self.dir = 1 if random.randint(0, 1) == 1 else -1
+        self.dir = 1
         self.surf = pg.image.load("ship.png").convert_alpha()
         self.surf = pg.transform.rotozoom(self.surf, 0, 0.8 *
                                           3*PLANK_RATIO*WIN_SIZE[1] / self.surf.get_height())
         self.rect = self.surf.get_rect()
+        if random.randint(0, 1) == 1:
+            self.dir = -1
+            self.surf = pg.transform.flip(self.surf, True, False)
 
     @property
     def velocity(self):
@@ -102,25 +149,36 @@ class Ship(pg.sprite.Sprite):
         window.blit(self.surf, (self.x, self.y))
 
     @staticmethod
-    def ships_gen(row, round_no):
+    def gen(row, round_no, player):
+        speed = 15 + (player.wins)*6 - round_no
+        if speed < 5:
+            speed = 5
+        no_of_elements = 2
+        if round_no == 3 and player.wins == 2:
+            no_of_elements += 1
+        elem = []
+        pos = [0, SB_POS[3] + (5*row-4)*PLANK_RATIO*WIN_SIZE[1]+10]
+        for i in range(no_of_elements):
+            pos[0] = random.randint(1, WIN_SIZE[0] - 10)
+            elem.append(Ship(pos, speed))
+        return elem
 
-        pass
 
-
-def round_setup(round_no, turn):
-    draw_bg(window)
-    draw_sb(window)
+def round_setup(round_no, player):
     walls = pg.sprite.Group()
+    ships = pg.sprite.Group()
 
     for i in range(LAND_CNT):
-        tmp = Wall.walls_gen(i+1, round_no)
+        tmp = Wall.gen(i+1, round_no)
         for j in tmp:
             walls.add(j)
-    for i in walls:
-        i.update(window)
-    pg.display.update()
+    for i in range(RIV_CNT):
+        tmp = Ship.gen(i+1, round_no, player)
+        for j in tmp:
+            ships.add(j)
+
     game_quit = False
-    ship1 = Ship((900, 300), 15)
+    # ship1 = Ship((900, 290), 8)
 
     while not game_quit:
         clock.tick(FPS)
@@ -128,14 +186,27 @@ def round_setup(round_no, turn):
         draw_sb(window)
         for i in walls:
             i.update(window)
-        ship1.update(window)
+        # ship1.update(window)
+        for i in ships:
+            i.update(window)
+        player.update(window)
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 game_quit = True
                 break
         pg.display.update()
-    pg.quit()
+    # pg.quit()
+
+
+def help_page(window):
+    pass
 
 
 initialize()
-round_setup(1, 0)
+help_page(window)
+player1 = Player(1)
+no_of_rounds = 1
+for round_no in range(1, no_of_rounds+1):
+    round_setup(round_no, player1)
+pg.quit()
