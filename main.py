@@ -9,7 +9,7 @@ clock = None
 def initialize():
     global window
     global clock
-    window = pg.display.set_mode(WIN_SIZE)
+    window = pg.display.set_mode((WIN_SIZE[0], WIN_SIZE[1]+SB_POS[3]))
     pg.display.set_caption(WIN_CAPTION)
     clock = pg.time.Clock()
 
@@ -25,6 +25,13 @@ def draw_bg(window):
 
     for i in LAND_POS:
         pg.draw.rect(window, BROWN, i)
+
+
+class Player(pg.sprite.Sprite):
+    def __init__(self):
+        pass
+
+    pass
 
 
 class Wall(pg.sprite.Sprite):
@@ -56,12 +63,48 @@ class Wall(pg.sprite.Sprite):
             pos.append(poss[random.randint(0, len(poss) - 1)]
                        * WIN_SIZE[0]//100)
             pos = list(set(pos))
-        print(row)
-        print(pos)
+        # print(row)
+        # print(pos)
         for i in pos:
             walls.append(
                 Wall((i, SB_POS[3] + (PLANK_RATIO*(5*row-1))*WIN_SIZE[1])))
         return walls
+
+
+class Ship(pg.sprite.Sprite):
+    def __init__(self, pos, speed):
+        super().__init__()
+        self.x = pos[0]
+        self.y = pos[1]
+        self.speed = speed
+        self.dir = 1 if random.randint(0, 1) == 1 else -1
+        self.surf = pg.image.load("ship.png").convert_alpha()
+        self.surf = pg.transform.rotozoom(self.surf, 0, 0.8 *
+                                          3*PLANK_RATIO*WIN_SIZE[1] / self.surf.get_height())
+        self.rect = self.surf.get_rect()
+
+    @property
+    def velocity(self):
+        return self.dir * self.speed
+
+    def update(self, window):
+        self.x += self.velocity
+        if self.x <= 0:
+            self.x = 0
+            self.dir = 1
+            self.surf = pg.transform.flip(self.surf, True, False)
+        elif self.x + self.surf.get_width() >= WIN_SIZE[0]:
+            self.x = WIN_SIZE[0] - self.surf.get_width()
+            self.dir = -1
+            self.surf = pg.transform.flip(self.surf, True, False)
+        # print(self.x)
+        # print(self.velocity)
+        window.blit(self.surf, (self.x, self.y))
+
+    @staticmethod
+    def ships_gen(row, round_no):
+
+        pass
 
 
 def round_setup(round_no, turn):
@@ -77,13 +120,21 @@ def round_setup(round_no, turn):
         i.update(window)
     pg.display.update()
     game_quit = False
+    ship1 = Ship((900, 300), 15)
 
     while not game_quit:
+        clock.tick(FPS)
+        draw_bg(window)
+        draw_sb(window)
+        for i in walls:
+            i.update(window)
+        ship1.update(window)
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                pg.quit()
                 game_quit = True
                 break
+        pg.display.update()
+    pg.quit()
 
 
 initialize()
