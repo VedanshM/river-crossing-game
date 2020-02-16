@@ -166,9 +166,9 @@ class Ship(pg.sprite.Sprite):
 
     @staticmethod
     def gen(row, round_no, player):
-        speed = 15 + (player.wins)*6 - round_no
-        if speed < 5:
-            speed = 5
+        speed = 15 + (player.wins)*6
+        print(round_no)
+        print(speed)
         no_of_elements = 2
         if round_no == 3 and player.wins == 2:
             no_of_elements += 1
@@ -178,6 +178,10 @@ class Ship(pg.sprite.Sprite):
             pos[0] = random.randint(1, WIN_SIZE[0] - 10)
             elem.append(Ship(pos, speed))
         return elem
+
+
+def help_page(window):
+    pass
 
 
 def round_play(round_no, player):
@@ -196,6 +200,7 @@ def round_play(round_no, player):
         for j in tmp:
             ships.add(j)
     player.pos_reset()
+    status = True
     score = 0
     check_pt = 0
     next_check_pt = check_pt + Ship.height()
@@ -225,7 +230,8 @@ def round_play(round_no, player):
 
         if pg.sprite.spritecollide(player, walls, 0) or pg.sprite.spritecollide(player, ships, 0):
             player.hit()
-            return False
+            status = False
+            break
         if player.dist_cover() >= TRACK_LEN:
             break
 
@@ -234,8 +240,10 @@ def round_play(round_no, player):
                 game_quit = True
                 break
         pg.display.update()
-    player.score += score
-    return True
+    if status:
+        player.score += score
+        player.wins += 1
+    return status
     # pg.quit()
 
 
@@ -244,14 +252,26 @@ def round_end(status):
     if game_quit:
         return
     window.fill(BLACK)
-    font1 = pg.font.SysFont('comicsans', 60, True)
-    if status:
-        heading = font1.render(WIN_MSG, True, WHITE)
-    else:
-        heading = font1.render(LOSE_MSB, True, WHITE)
-    headrect = heading.get_rect()
-    headrect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]//2)
-    window.blit(heading, headrect)
+    fontb = pg.font.SysFont('comicsans', 80, True)
+    fontm = pg.font.SysFont('comicsans', 40, True)
+    heading = fontb.render(WIN_MSG if status else LOSE_MSB,
+                           True, WHITE)
+    scr_head = fontm.render("Scores", True, WHITE)
+    scr1 = fontm.render("Player 1 : {0}".format(player1.score), True, WHITE)
+    scr2 = fontm.render("Player 2 : {0}".format(player2.score), True, WHITE)
+    hrect = heading.get_rect()
+    shrect = scr_head.get_rect()
+    srect1 = scr1.get_rect()
+    srect2 = scr2.get_rect()
+    hrect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]*0.4)
+    shrect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]*0.6)
+    srect1.center = (WIN_SIZE[0]//2, WIN_SIZE[1]*0.7)
+    srect2.center = (WIN_SIZE[0]//2, srect1.bottom + 30)
+
+    window.blit(heading, hrect)
+    window.blit(scr_head, shrect)
+    window.blit(scr1, srect1)
+    window.blit(scr2, srect2)
     pg.display.update()
     ctime = pg.time.get_ticks()
     while pg.time.get_ticks() - ctime < ROUND_RESULT_DELAY:
@@ -259,10 +279,6 @@ def round_end(status):
             if event.type == pg.QUIT:
                 game_quit = True
                 return
-
-
-def help_page(window):
-    pass
 
 
 def score_display(score, round_no, player):
@@ -283,6 +299,25 @@ def score_display(score, round_no, player):
     window.blit(sheading, sheadrect)
 
 
+def round_start(round_no, player):
+    global game_quit
+    if game_quit:
+        return
+    window.fill(BLACK)
+    fontb = pg.font.SysFont('comicsans', 60, True)
+    fontm = pg.font.SysFont('comicsans', 40, True)
+    heading = fontb.render("ROUND : {0}".format(round_no), True, WHITE)
+    pname = fontm.render("{0}".format(player.name), True, WHITE)
+    hrect = heading.get_rect()
+    prect = pname.get_rect()
+    hrect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]//2)
+    prect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]*0.75)
+    window.blit(heading, hrect)
+    window.blit(pname, prect)
+    pg.display.update()
+    pg.time.delay(1500)
+
+
 pg.init()
 pg.font.init()
 game_quit = False
@@ -290,8 +325,13 @@ initialize()
 help_page(window)
 player1 = Player(1)
 player2 = Player(2)
-no_of_rounds = 1
+no_of_rounds = 3
 for round_no in range(1, no_of_rounds+1):
+    round_start(round_no, player1)
     status = round_play(round_no, player1)
     round_end(status)
+    round_start(round_no, player2)
+    status = round_play(round_no, player2)
+    round_end(status)
+
 pg.quit()
