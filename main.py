@@ -164,7 +164,7 @@ class Ship(pg.sprite.Sprite):
         return elem
 
 
-def round_setup(round_no, player):
+def round_play(round_no, player):
     walls = pg.sprite.Group()
     ships = pg.sprite.Group()
 
@@ -184,11 +184,8 @@ def round_setup(round_no, player):
         clock.tick(FPS)
         draw_bg(window)
         draw_sb(window)
-        for i in walls:
-            i.update(window)
-        # ship1.update(window)
-        for i in ships:
-            i.update(window)
+        walls.update(window)
+        ships.update(window)
         player.update(window)
 
         for event in pg.event.get():
@@ -208,5 +205,5 @@ help_page(window)
 player1 = Player(1)
 no_of_rounds = 1
 for round_no in range(1, no_of_rounds+1):
-    round_setup(round_no, player1)
+    round_play(round_no, player1)
 pg.quit()
