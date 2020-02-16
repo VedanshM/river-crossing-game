@@ -1,4 +1,4 @@
-FPS = 25
+FPS = 250
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -25,3 +25,7 @@ LAND_POS = [
 ]
 
 WALL_POINTS = 5
+
+WIN_MSG = "You Won!"
+LOSE_MSB = "You Lose!"
+ROUND_RESULT_DELAY = 2500

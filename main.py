@@ -35,23 +35,25 @@ class Player(pg.sprite.Sprite):
         self.surf = pg.image.load("turtle.png").convert_alpha()
         self.surf = pg.transform.rotozoom(self.surf, 0,
                                           PLANK_RATIO*WIN_SIZE[1] / self.surf.get_height())
-        self.x = (WIN_SIZE[0]-self.surf.get_height())//2
-        self.y = SB_POS[3]
+        self.rect = self.surf.get_rect()
+        self.rect.centerx, self.rect.y = (WIN_SIZE[0]//2, SB_POS[3])
+        # self.x = (WIN_SIZE[0]-self.surf.get_height())//2
+        # self.y = SB_POS[3]
         if plno == 1:
             self.ckeys = {"up": pg.K_UP, "down": pg.K_DOWN,
                           "left": pg.K_LEFT, "right": pg.K_RIGHT}
             self.name = "Player 1"
             self.visible = True
-            self.y += WIN_SIZE[1]*(1-PLANK_RATIO)
-            self.ylimit = (SB_POS[3] + WIN_SIZE[1]*PLANK_RATIO, self.y)
+            self.rect.y += WIN_SIZE[1]*(1-PLANK_RATIO)
+            self.ylimit = (SB_POS[3], self.rect.y)
         else:
             self.ckeys = {"up": pg.K_w, "down": pg.K_s,
                           "left": pg.K_a, "right": pg.K_d}
             self.name = "PLayer 2"
             self.visible = False
-            self.ylimit = (self.y, SB_POS[3] + WIN_SIZE[1]*(1-2*PLANK_RATIO))
+            self.ylimit = (
+                self.rect.y, SB_POS[3] + WIN_SIZE[1]*(1-PLANK_RATIO))
             self.surf = pg.transform.scale(self.surf, 180, 1)
-        self.rect = self.surf.get_rect()
 
     def update(self, window):
         if not self.visible:
@@ -59,37 +61,39 @@ class Player(pg.sprite.Sprite):
         keys = pg.key.get_pressed()
 
         if keys[self.ckeys["up"]]:
-            self.y -= self.speed
+            self.rect.y -= self.speed
         if keys[self.ckeys["down"]]:
-            self.y += self.speed
+            self.rect.y += self.speed
         if keys[self.ckeys["left"]]:
-            self.x -= self.speed
+            self.rect.x -= self.speed
         if keys[self.ckeys["right"]]:
-            self.x += self.speed
+            self.rect.x += self.speed
 
-        if(self.x < 0):
-            self.x = 0
-        if self.x > WIN_SIZE[0]-self.surf.get_width():
-            self.x = WIN_SIZE[0]-self.surf.get_width()
-        if(self.y < self.ylimit[0]):
-            self.y = self.ylimit[0]
-        if self.y > self.ylimit[1]:
-            self.y = self.ylimit[1]
-        window.blit(self.surf, (self.x, self.y))
+        if(self.rect.left < 0):
+            self.rect.left = 0
+        if self.rect.right > WIN_SIZE[0]:
+            self.rect.right = WIN_SIZE[0]
+        if(self.rect.y < self.ylimit[0]):
+            self.rect.y = self.ylimit[0]
+        if self.rect.y > self.ylimit[1]:
+            self.rect.y = self.ylimit[1]
+        window.blit(self.surf, self.rect)
+
+    def hit(self):
+        pass
 
 
 class Wall(pg.sprite.Sprite):
     def __init__(self, pos):
         super().__init__()
-        self.x = pos[0]
-        self.y = pos[1]
         self.surf = pg.image.load("wall.png").convert_alpha()
         self.surf = pg.transform.scale(self.surf,
                                        (int(LAND_POS[0][3]), int(LAND_POS[0][3])))
         self.rect = self.surf.get_rect()
+        self.rect.topleft = pos
 
     def update(self, window):
-        window.blit(self.surf, (self.x, self.y))
+        window.blit(self.surf, self.rect)
 
     @staticmethod
     def gen(row, round_no):
@@ -118,14 +122,15 @@ class Wall(pg.sprite.Sprite):
 class Ship(pg.sprite.Sprite):
     def __init__(self, pos, speed):
         super().__init__()
-        self.x = pos[0]
-        self.y = pos[1]
+        # self.x = pos[0]
+        # self.y = pos[1]
         self.speed = speed
         self.dir = 1
         self.surf = pg.image.load("ship.png").convert_alpha()
         self.surf = pg.transform.rotozoom(self.surf, 0, 0.8 *
                                           3*PLANK_RATIO*WIN_SIZE[1] / self.surf.get_height())
         self.rect = self.surf.get_rect()
+        self.rect.topleft = pos
         if random.randint(0, 1) == 1:
             self.dir = -1
             self.surf = pg.transform.flip(self.surf, True, False)
@@ -135,18 +140,16 @@ class Ship(pg.sprite.Sprite):
         return self.dir * self.speed
 
     def update(self, window):
-        self.x += self.velocity
-        if self.x <= 0:
-            self.x = 0
+        self.rect.x += self.velocity
+        if self.rect.left < 0:
+            self.rect.left = 0
             self.dir = 1
             self.surf = pg.transform.flip(self.surf, True, False)
-        elif self.x + self.surf.get_width() >= WIN_SIZE[0]:
-            self.x = WIN_SIZE[0] - self.surf.get_width()
+        elif self.rect.right > WIN_SIZE[0]:
+            self.rect.right = WIN_SIZE[0]
             self.dir = -1
             self.surf = pg.transform.flip(self.surf, True, False)
-        # print(self.x)
-        # print(self.velocity)
-        window.blit(self.surf, (self.x, self.y))
+        window.blit(self.surf, self.rect)
 
     @staticmethod
     def gen(row, round_no, player):
@@ -165,6 +168,9 @@ class Ship(pg.sprite.Sprite):
 
 
 def round_play(round_no, player):
+    global game_quit
+    if(game_quit):
+        return
     walls = pg.sprite.Group()
     ships = pg.sprite.Group()
 
@@ -177,9 +183,6 @@ def round_play(round_no, player):
         for j in tmp:
             ships.add(j)
 
-    game_quit = False
-    # ship1 = Ship((900, 290), 8)
-
     while not game_quit:
         clock.tick(FPS)
         draw_bg(window)
@@ -188,22 +191,53 @@ def round_play(round_no, player):
         ships.update(window)
         player.update(window)
 
+        if pg.sprite.spritecollide(player, walls, 0) or pg.sprite.spritecollide(player, ships, 0):
+            player.hit()
+            return False
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 game_quit = True
                 break
         pg.display.update()
+    return True
     # pg.quit()
+
+
+def round_end(status):
+    global game_quit
+    if game_quit:
+        return
+    window.fill(BLACK)
+    font1 = pg.font.SysFont('comicsans', 60, True)
+    if status:
+        heading = font1.render(WIN_MSG, True, WHITE)
+    else:
+        heading = font1.render(LOSE_MSB, True, WHITE)
+    headrect = heading.get_rect()
+    headrect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]//2)
+    window.blit(heading, headrect)
+    pg.display.update()
+    ctime = pg.time.get_ticks()
+    while pg.time.get_ticks() - ctime < ROUND_RESULT_DELAY:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                game_quit = True
+                return
 
 
 def help_page(window):
     pass
 
 
+pg.init()
+pg.font.init()
+game_quit = False
 initialize()
 help_page(window)
 player1 = Player(1)
 no_of_rounds = 1
 for round_no in range(1, no_of_rounds+1):
-    round_play(round_no, player1)
+    status = round_play(round_no, player1)
+    round_end(status)
 pg.quit()
