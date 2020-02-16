@@ -1,4 +1,4 @@
-FPS = 250
+FPS = 25
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -25,6 +25,10 @@ LAND_POS = [
 ]
 
 WALL_POINTS = 5
+RIV_POINTS = 10
+TM_POINTS = 1
+
+TRACK_LEN = int((1-PLANK_RATIO)*WIN_SIZE[1])
 
 WIN_MSG = "You Won!"
 LOSE_MSB = "You Lose!"
