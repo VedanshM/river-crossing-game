@@ -30,7 +30,7 @@ def draw_bg(window):
 class Player(pg.sprite.Sprite):
     def __init__(self, plno):
         self.no = plno
-        self.speed = 10
+        self.speed = PLAYER_SPEED
         self.score = 0
         self.wins = 0
         self.surf = pg.image.load("turtle.png").convert_alpha()
@@ -166,7 +166,7 @@ class Ship(pg.sprite.Sprite):
 
     @staticmethod
     def gen(row, round_no, player):
-        speed = 15 + (player.wins)*6
+        speed = BASE_SPEED_SHIP + (player.wins)*DIFF_INC
         print(round_no)
         print(speed)
         no_of_elements = 2
@@ -181,7 +181,38 @@ class Ship(pg.sprite.Sprite):
 
 
 def help_page(window):
-    pass
+    global game_quit
+    if game_quit:
+        return
+    enter_pressed = False
+    fontb = pg.font.SysFont(MAIN_FONT, 60, True)
+    font = pg.font.SysFont(MAIN_FONT, 40, False)
+    head = fontb.render(HELP_HEAD, True, WHITE)
+    hrect = head.get_rect()
+    hrect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]//6)
+    lines_surf = []
+    lines_rect = []
+    prect = hrect.copy()
+    prect.y += 20
+    for line in HELP_MSG:
+        lines_surf.append(font.render(line, False, WHITE))
+        lines_rect.append(lines_surf[-1].get_rect())
+        lines_rect[-1].centerx = prect.centerx
+        lines_rect[-1].top = prect.bottom + 50
+        prect = lines_rect[-1].copy()
+    window.fill(BLACK)
+    window.blit(head, hrect)
+    for i in range(len(lines_rect)):
+        window.blit(lines_surf[i], lines_rect[i])
+    pg.display.update()
+
+    while not(game_quit) and not(enter_pressed):
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                game_quit = True
+                return
+        if pg.key.get_pressed()[pg.K_RETURN]:
+            enter_pressed = True
 
 
 def round_play(round_no, player):
@@ -252,8 +283,8 @@ def round_end(status):
     if game_quit:
         return
     window.fill(BLACK)
-    fontb = pg.font.SysFont('comicsans', 80, True)
-    fontm = pg.font.SysFont('comicsans', 40, True)
+    fontb = pg.font.SysFont(MAIN_FONT, 80, True)
+    fontm = pg.font.SysFont(MAIN_FONT, 40, True)
     heading = fontb.render(WIN_MSG if status else LOSE_MSB,
                            True, WHITE)
     scr_head = fontm.render("Scores", True, WHITE)
@@ -282,7 +313,7 @@ def round_end(status):
 
 
 def score_display(score, round_no, player):
-    font = pg.font.SysFont('comicsans', SB_POS[3]*90//100, True)
+    font = pg.font.SysFont(MAIN_FONT, SB_POS[3]*90//100, True)
     rheading = font.render("Round {0}".format(player.no), True, BLACK)
     rheadrect = rheading.get_rect()
     rheadrect.left, rheadrect.centery = (0, SB_POS[3]//2)
@@ -304,8 +335,8 @@ def round_start(round_no, player):
     if game_quit:
         return
     window.fill(BLACK)
-    fontb = pg.font.SysFont('comicsans', 60, True)
-    fontm = pg.font.SysFont('comicsans', 40, True)
+    fontb = pg.font.SysFont(MAIN_FONT, 60, True)
+    fontm = pg.font.SysFont(MAIN_FONT, 40, True)
     heading = fontb.render("ROUND : {0}".format(round_no), True, WHITE)
     pname = fontm.render("{0}".format(player.name), True, WHITE)
     hrect = heading.get_rect()
@@ -318,6 +349,49 @@ def round_start(round_no, player):
     pg.time.delay(1500)
 
 
+def final_standings():
+    global game_quit
+    if game_quit:
+        return
+    fontb = pg.font.SysFont(MAIN_FONT, 60, True)
+    font = pg.font.SysFont(MAIN_FONT, 40, True)
+
+    head = fontb.render("FINAL STANDINGS", True, WHITE)
+    hrect = head.get_rect()
+    hrect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]//6)
+    scr1 = font.render("Player 1 : {0}".format(player1.score), True, WHITE)
+    scr2 = font.render("Player 2 : {0}".format(player2.score), True, WHITE)
+    srect1 = scr1.get_rect()
+    srect2 = scr2.get_rect()
+    srect1.center = (WIN_SIZE[0]//2, WIN_SIZE[1]*0.5)
+    srect2.center = (WIN_SIZE[0]//2, srect1.bottom + 30)
+    winner = player1.name if player1.score > player2.score else player2.name
+    if player1.score == player2.score == 0:
+        msg = "No One Won !!"
+    elif player1.score == player2.score:
+        msg = "It's a Tie !!"
+    else:
+        msg = "{0} Won !!".format(winner)
+    msg_surf = font.render(msg, True, WHITE)
+    msg_rect = msg_surf.get_rect()
+    msg_rect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]*0.8)
+    window.fill(BLACK)
+    window.blit(head, hrect)
+    window.blit(scr1, srect1)
+    window.blit(scr2, srect2)
+    window.blit(msg_surf, msg_rect)
+    pg.display.update()
+
+    enter_pressed = False
+    while not(game_quit) and not(enter_pressed):
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                game_quit = True
+                return
+        if pg.key.get_pressed()[pg.K_RETURN]:
+            enter_pressed = True
+
+
 pg.init()
 pg.font.init()
 game_quit = False
@@ -325,13 +399,14 @@ initialize()
 help_page(window)
 player1 = Player(1)
 player2 = Player(2)
-no_of_rounds = 3
-for round_no in range(1, no_of_rounds+1):
+for round_no in range(1, ROUNDS_CNT+1):
     round_start(round_no, player1)
     status = round_play(round_no, player1)
     round_end(status)
     round_start(round_no, player2)
     status = round_play(round_no, player2)
     round_end(status)
-
+    if game_quit:
+        break
+final_standings()
 pg.quit()
