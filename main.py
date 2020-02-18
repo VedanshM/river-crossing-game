@@ -10,6 +10,7 @@ def initialize():
     global window
     global clock
     global high_score
+    global explosion
     window = pg.display.set_mode((WIN_SIZE[0], WIN_SIZE[1]+SB_POS[3]))
     pg.display.set_caption(WIN_CAPTION)
     clock = pg.time.Clock()
@@ -27,6 +28,7 @@ def initialize():
         high_score_file.close()
     # music = pg.mixer.music.load(MUSIC_FILE)
     pg.mixer.music.load(MUSIC_FILE)
+    explosion = pg.mixer.Sound(EXPLOSION_FILE)
 
 
 def draw_sb(window):
@@ -99,7 +101,9 @@ class Player(pg.sprite.Sprite):
         return d
 
     def hit(self):
-        pass
+        pg.mixer.music.pause()
+        explosion.play()
+        pg.mixer.music.unpause()
 
     def pos_reset(self):
         self.rect = self.orig_rect.copy()
@@ -270,12 +274,13 @@ def round_play(round_no, player):
         if pg.time.get_ticks() - psec >= 1000:
             psec = pg.time.get_ticks()
             score -= TM_POINTS
-        score_display(score, round_no, player)
 
         if pg.sprite.spritecollide(player, walls, 0) or pg.sprite.spritecollide(player, ships, 0):
             player.hit()
             status = False
             break
+        score_display(score, round_no, player)
+
         if player.dist_cover() >= TRACK_LEN:
             break
 
