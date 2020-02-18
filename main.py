@@ -9,9 +9,24 @@ clock = None
 def initialize():
     global window
     global clock
+    global high_score
     window = pg.display.set_mode((WIN_SIZE[0], WIN_SIZE[1]+SB_POS[3]))
     pg.display.set_caption(WIN_CAPTION)
     clock = pg.time.Clock()
+    try:
+        high_score_file = open(HG_FILE, 'r')
+
+    except FileNotFoundError:
+        high_score_file = open(HG_FILE, 'w')
+        high_score_file.write("0")
+        high_score_file.close()
+        high_score_file = open(HG_FILE, 'r')
+
+    finally:
+        high_score = int(high_score_file.readline())
+        high_score_file.close()
+    # music = pg.mixer.music.load(MUSIC_FILE)
+    pg.mixer.music.load(MUSIC_FILE)
 
 
 def draw_sb(window):
@@ -216,6 +231,7 @@ def round_play(round_no, player):
     global game_quit
     if(game_quit):
         return
+
     walls = pg.sprite.Group()
     ships = pg.sprite.Group()
 
@@ -233,7 +249,7 @@ def round_play(round_no, player):
     check_pt = 0
     next_check_pt = check_pt + Ship.height()
     psec = pg.time.get_ticks()
-
+    # pg.mixer.music.play()
     while not game_quit:
         clock.tick(FPS)
         draw_bg(window)
@@ -268,6 +284,7 @@ def round_play(round_no, player):
                 game_quit = True
                 break
         pg.display.update()
+    # pg.mixer.music.stop()
     if status:
         player.score += score
         player.wins += 1
@@ -433,25 +450,15 @@ def final_standings():
             enter_pressed = True
 
 
-try:
-    high_score_file = open(HG_FILE, 'r')
-except FileNotFoundError:
-    high_score_file = open(HG_FILE, 'w')
-    high_score_file.write("0")
-    high_score_file.close()
-    high_score_file = open(HG_FILE, 'r')
-
-finally:
-    high_score = int(high_score_file.readline())
-    high_score_file.close()
-
 pg.init()
 pg.font.init()
+pg.mixer.init()
 game_quit = False
 initialize()
 help_page(window)
 player1 = Player(1)
 player2 = Player(2)
+pg.mixer.music.play(-1)
 for round_no in range(1, ROUNDS_CNT+1):
     round_start(round_no, player1)
     status = round_play(round_no, player1)
@@ -468,6 +475,7 @@ if player2.score > high_score:
     high_score = player2.score
 
 final_standings()
+pg.mixer.music.stop()
 
 high_score_file = open(HG_FILE, 'w')
 high_score_file.write(str(high_score))

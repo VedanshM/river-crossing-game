@@ -9,6 +9,7 @@ BROWN = (209, 84, 6)
 
 MAIN_FONT = 'comicsans'
 HG_FILE = 'hg_score.txt'
+MUSIC_FILE = 'music.mp3'
 SB_POS = (0, 0, 1500, 50)
 WIN_SIZE = (1500, 800)
 WIN_CAPTION = "The Game"
