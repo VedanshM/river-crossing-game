@@ -122,8 +122,7 @@ class Wall(pg.sprite.Sprite):
             pos.append(poss[random.randint(0, len(poss) - 1)]
                        * WIN_SIZE[0]//100)
             pos = list(set(pos))
-        # print(row)
-        # print(pos)
+
         for i in pos:
             walls.append(
                 Wall((i, SB_POS[3] + (PLANK_RATIO*(5*row-1))*WIN_SIZE[1])))
@@ -167,8 +166,6 @@ class Ship(pg.sprite.Sprite):
     @staticmethod
     def gen(row, round_no, player):
         speed = BASE_SPEED_SHIP + (player.wins)*DIFF_INC
-        print(round_no)
-        print(speed)
         no_of_elements = 2
         if round_no == 3 and player.wins == 2:
             no_of_elements += 1
@@ -382,14 +379,17 @@ def final_standings():
     font = pg.font.SysFont(MAIN_FONT, 40, True)
 
     head = fontb.render("FINAL STANDINGS", True, WHITE)
-    hrect = head.get_rect()
-    hrect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]//6)
     scr1 = font.render("Player 1 : {0}".format(player1.score), True, WHITE)
     scr2 = font.render("Player 2 : {0}".format(player2.score), True, WHITE)
+    hscr_surf = font.render("HIGH SCORE: {0}".format(high_score), True, WHITE)
+    hrect = head.get_rect()
     srect1 = scr1.get_rect()
     srect2 = scr2.get_rect()
+    hscr_rect = hscr_surf.get_rect()
+    hrect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]//6)
     srect1.center = (WIN_SIZE[0]//2, WIN_SIZE[1]*0.5)
     srect2.center = (WIN_SIZE[0]//2, srect1.bottom + 30)
+    hscr_rect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]*0.95)
     winner = player1.name if player1.score > player2.score else player2.name
     if player1.score == player2.score == 0:
         msg = "No One Won !!"
@@ -404,6 +404,7 @@ def final_standings():
     window.blit(head, hrect)
     window.blit(scr1, srect1)
     window.blit(scr2, srect2)
+    window.blit(hscr_surf, hscr_rect)
     bsurf = window.copy()
     brect = bsurf.get_rect()
     brect.topleft = (0, 0)
@@ -432,6 +433,18 @@ def final_standings():
             enter_pressed = True
 
 
+try:
+    high_score_file = open(HG_FILE, 'r')
+except FileNotFoundError:
+    high_score_file = open(HG_FILE, 'w')
+    high_score_file.write("0")
+    high_score_file.close()
+    high_score_file = open(HG_FILE, 'r')
+
+finally:
+    high_score = int(high_score_file.readline())
+    high_score_file.close()
+
 pg.init()
 pg.font.init()
 game_quit = False
@@ -448,5 +461,15 @@ for round_no in range(1, ROUNDS_CNT+1):
     round_end(status)
     if game_quit:
         break
+
+if player1.score > high_score:
+    high_score = player1.score
+if player2.score > high_score:
+    high_score = player2.score
+
 final_standings()
+
+high_score_file = open(HG_FILE, 'w')
+high_score_file.write(str(high_score))
+high_score_file.close()
 pg.quit()
