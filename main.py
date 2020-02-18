@@ -283,6 +283,8 @@ def round_end(status):
     if game_quit:
         return
     window.fill(BLACK)
+    bsurf = window.copy()
+    brect = window.get_rect()
     fontb = pg.font.SysFont(MAIN_FONT, 80, True)
     fontm = pg.font.SysFont(MAIN_FONT, 40, True)
     heading = fontb.render(WIN_MSG if status else LOSE_MSB,
@@ -299,13 +301,21 @@ def round_end(status):
     srect1.center = (WIN_SIZE[0]//2, WIN_SIZE[1]*0.7)
     srect2.center = (WIN_SIZE[0]//2, srect1.bottom + 30)
 
-    window.blit(heading, hrect)
-    window.blit(scr_head, shrect)
-    window.blit(scr1, srect1)
-    window.blit(scr2, srect2)
-    pg.display.update()
-    ctime = pg.time.get_ticks()
-    while pg.time.get_ticks() - ctime < ROUND_RESULT_DELAY:
+    bsurf.blit(heading, hrect)
+    bsurf.blit(scr_head, shrect)
+    bsurf.blit(scr1, srect1)
+    bsurf.blit(scr2, srect2)
+    brect.topleft = (0, -200)
+
+    psec = pg.time.get_ticks()
+    while pg.time.get_ticks() - psec < 500:
+        clock.tick(FPS)
+        brect.y += 15
+        window.fill(BLACK)
+        window.blit(bsurf, brect)
+        pg.display.update()
+
+    while pg.time.get_ticks() - psec < ROUND_RESULT_DELAY:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 game_quit = True
@@ -314,7 +324,7 @@ def round_end(status):
 
 def score_display(score, round_no, player):
     font = pg.font.SysFont(MAIN_FONT, SB_POS[3]*90//100, True)
-    rheading = font.render("Round {0}".format(player.no), True, BLACK)
+    rheading = font.render("Round {0}".format(round_no), True, BLACK)
     rheadrect = rheading.get_rect()
     rheadrect.left, rheadrect.centery = (0, SB_POS[3]//2)
     window.blit(rheading, rheadrect)
@@ -335,6 +345,7 @@ def round_start(round_no, player):
     if game_quit:
         return
     window.fill(BLACK)
+    bsurf = window.copy()
     fontb = pg.font.SysFont(MAIN_FONT, 60, True)
     fontm = pg.font.SysFont(MAIN_FONT, 40, True)
     heading = fontb.render("ROUND : {0}".format(round_no), True, WHITE)
@@ -342,11 +353,25 @@ def round_start(round_no, player):
     hrect = heading.get_rect()
     prect = pname.get_rect()
     hrect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]//2)
-    prect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]*0.75)
-    window.blit(heading, hrect)
-    window.blit(pname, prect)
-    pg.display.update()
-    pg.time.delay(1500)
+    prect.center = (WIN_SIZE[0]//2, WIN_SIZE[1]*3/4)
+    bsurf.blit(heading, hrect)
+    bsurf.blit(pname, prect)
+    brect = bsurf.get_rect()
+    brect.topleft = (0, -250)
+    psec = pg.time.get_ticks()
+    while pg.time.get_ticks() - psec <= 400:
+        clock.tick(FPS)
+        brect.y += 17
+        window.fill(BLACK)
+        window.blit(bsurf, brect)
+        pg.display.update()
+    psec = pg.time.get_ticks()
+    while pg.time.get_ticks() - psec <= 1100:
+        clock.tick(FPS)
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                game_quit = True
+                return
 
 
 def final_standings():
@@ -379,11 +404,26 @@ def final_standings():
     window.blit(head, hrect)
     window.blit(scr1, srect1)
     window.blit(scr2, srect2)
+    bsurf = window.copy()
+    brect = bsurf.get_rect()
+    brect.topleft = (0, 0)
     window.blit(msg_surf, msg_rect)
     pg.display.update()
-
+    psec = pg.time.get_ticks()
+    msg_vis = True
     enter_pressed = False
     while not(game_quit) and not(enter_pressed):
+        clock.tick(FPS)
+        if pg.time.get_ticks() - psec >= 350:
+            psec = pg.time.get_ticks()
+            if msg_vis:
+                window.blit(bsurf, brect)
+                msg_vis = False
+            else:
+                window.blit(msg_surf, msg_rect)
+                msg_vis = True
+        pg.display.update()
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 game_quit = True
